@@ -1,0 +1,22 @@
+# 가상환경
+venv/
+.env/
+__pycache__/
+*.pyc
+
+# 환경설정 파일
+.env
+*.env
+
+# VSCode 관련
+.vscode/
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# test 결과문
+converted_result/
+
+# test data
+data/

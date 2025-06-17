@@ -1,0 +1,9 @@
+streamlit
+python-dotenv
+openai
+aiohttp
+requests
+# 아래는 선택 사항(예: 금융권 규정 검토 등 추가 기능 필요시)
+# pandas
+# numpy
+# 기타 필요한 패키지 추가
