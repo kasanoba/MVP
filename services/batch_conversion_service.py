@@ -1,5 +1,5 @@
 import os
-from services.code_conversion_service import convert_cobol_code
+from services.code_conversion_service import convert_cobol_code, save_history
 from azure.storage.blob import BlobServiceClient
 
 """
@@ -10,14 +10,7 @@ batch_conversion_service.py
 
 [주요 기능]
 1. 디렉토리 현황 조회 (analyze_cobol_files)
-   - 지정한 root 디렉토리 하위의 모든 폴더를 탐색하여
-     각 폴더별 COBOL 파일 개수와 전체 용량을 계산합니다.
-
 2. 일괄 변환 (batch_convert_cobol)
-   - 지정한 root 디렉토리 하위의 모든 COBOL 파일을 변환하여
-     output_root에 원본과 동일한 디렉토리 구조로 저장합니다.
-   - 변환 진행률 콜백 및 실패 파일 목록 반환 기능을 포함합니다.
-   - storage_option: "local"(로컬 저장), "blob"(Azure Blob Storage 업로드) 선택 가능
 """
 
 # 디렉토리 현황 조회
@@ -88,10 +81,9 @@ def batch_convert_cobol(root_dir, target_lang, output_root, progress_callback=No
 
                     converted_code = convert_cobol_code(cobol_code, target_lang)
 
-                    # 변환 결과에 오류 메시지가 포함되어 있으면 실패로 간주
                     if converted_code.startswith("# 변환 중 오류 발생"):
                         fail_files.append((src_path, converted_code.strip()))
-                        continue  # 저장하지 않고 다음 파일로
+                        continue
 
                     rel_path = os.path.relpath(dirpath, root_dir)
                     new_ext = ext_map.get(target_lang, ".txt")
@@ -104,10 +96,28 @@ def batch_convert_cobol(root_dir, target_lang, output_root, progress_callback=No
                         with open(save_path, "w", encoding="utf-8") as f:
                             f.write(converted_code)
 
+                        # ✅ 이력 저장 추가
+                        save_history(
+                            input_code=cobol_code,
+                            output_code=converted_code,
+                            lang=target_lang,
+                            filename=os.path.join(rel_path, filename),
+                            storage_type="local"
+                        )
+
                     elif storage_option == "blob":
                         blob_path = os.path.join(rel_path, new_filename).replace("\\", "/")
                         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
                         blob_client.upload_blob(converted_code, overwrite=True)
+
+                        # ✅ 이력 저장 (blob)
+                        save_history(
+                            input_code=cobol_code,
+                            output_code=converted_code,
+                            lang=target_lang,
+                            filename=os.path.join(rel_path, filename),
+                            storage_type="blob"
+                        )
 
                 except Exception as e:
                     fail_files.append((src_path, str(e)))
