@@ -39,6 +39,10 @@ mvp/
 streamlit
 python-dotenv
 openai
+aiohttp
+requests
+azure-storage-blob
+tiktoken
 ```
 (필요에 따라 추가 패키지 직접 등록)
 
@@ -47,7 +51,7 @@ openai
 ## 앱 실행 방법
 
 1. **필수 패키지 설치**
-    ```
+    ```bash
     pip install -r requirements.txt
     ```
 
@@ -56,6 +60,8 @@ openai
     OPENAI_API_KEY=sk-xxxxxxx
     OPENAI_ENDPOINT=https://api.openai.com/v1
     CHAT_MODEL=gpt-4o
+    AZURE_STORAGE_CONNECTION_STRING=your_connection_string  # Blob 저장 시 필요
+    CONTAINER_NAME=your_container_name                      # Blob 저장 시 필요
     ```
 
 3. **앱 실행**
@@ -83,11 +89,12 @@ openai
 
 ## 사용된 기술 스택
 
-- **Python 3.x**
-- **Streamlit** : 웹 UI 프레임워크
-- **OpenAI API** : GPT-4o 등 코드 변환 엔진
-- **python-dotenv** : 환경변수 관리
-- **기타** : 표준 라이브러리(os, glob, json 등)
+- Python 3.x  
+- Streamlit (웹 UI)  
+- OpenAI API (GPT-4o)  
+- Azure Blob Storage (옵션, 변환 결과 저장용)  
+- python-dotenv (환경변수 관리)  
+- 표준 Python 라이브러리 (os, json 등)
 
 ---
 
