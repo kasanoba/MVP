@@ -106,7 +106,7 @@ def save_history(input_code, output_code, lang, filename=None, storage_type="loc
     file_path = f"data/history_{today}.jsonl"
     # 공통 로그 구조 생성
     log = {
-        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),  # 현재 시간
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # 현재 시간
         "input": input_code,    # 입력된 COBOL 코드
         "output": output_code,  # 변환된 코드
         "lang": lang            # 대상 언어
