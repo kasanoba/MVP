@@ -1,15 +1,26 @@
 import streamlit as st
 import openai
+import os
+from dotenv import load_dotenv, find_dotenv
+
+
+# .env 파일에서 환경 변수 로드
+load_dotenv(find_dotenv())
+
+# 환경 변수에서 필요한 값 가져오기 (Azure OpenAI용)
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+DEPLOYMENT_NAME = os.getenv("DEPLOYMENT_NAME")
 
 # Azure OpenAI 설정
-AZURE_OPENAI_ENDPOINT = "https://sungok-openai-001.openai.azure.com/"
-AZURE_OPENAI_API_KEY = ""
-DEPLOYMENT_NAME = "gpt-4o-mini"
+# AZURE_OPENAI_ENDPOINT = "https://sungok-openai-004.openai.azure.com/"
+# AZURE_OPENAI_API_KEY = ""
+# DEPLOYMENT_NAME = "gpt-4o-mini"
 
 # OpenAI 라이브러리 초기화
 openai.api_type = "azure"
 openai.azure_endpoint = AZURE_OPENAI_ENDPOINT
-openai.api_version = "2024-12-01-preview"
+openai.api_version = "2024-05-01-preview"
 openai.api_key = AZURE_OPENAI_API_KEY
 
 def get_openai_response(messages):
