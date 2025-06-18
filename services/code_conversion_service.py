@@ -69,12 +69,14 @@ def convert_cobol_code(cobol_code: str, target_lang: str) -> str:
     if not cobol_code or not target_lang:
         return "# 변환할 COBOL 코드와 대상 언어를 모두 입력하세요."
 
-    # GPT 모델에 전달할 변환 요청 프롬프트 생성
+    # GPT 모델에 전달할 변환 요청 프롬프트 생성  
     prompt = (
-        f"다음 COBOL 코드를 {target_lang.capitalize()} 코드로 변환해줘. "
-        "주석은 최소화하고, 가독성 좋게 작성해줘.\n\n"
-        f"COBOL 코드:\n{cobol_code}"
-    )
+        f"다음 COBOL 코드를 {target_lang.capitalize()} 코드로 변환해줘.\n"
+        "변환 결과는 반드시 **코드 블록 없이 전체를 주석부터 시작하는 텍스트 형태로** 응답해줘.\n"
+        "변환된 코드 외의 설명이 있으면 모두 주석으로 표시해줘.\n"
+        "코드는 최소한의 주석을 포함해 가독성 좋게 작성해줘.\n\n"
+        f"COBOL 코드:\n{cobol_code}\n\n"
+    ) 
 
     try:
         # OpenAI Chat API 호출
@@ -84,7 +86,7 @@ def convert_cobol_code(cobol_code: str, target_lang: str) -> str:
                 {"role": "system", "content": "You are a helpful AI developer assistant."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=100,     # 반환될 응답 최대 토큰 수
+            max_tokens=1000,     # 반환될 응답 최대 토큰 수
             temperature=0.7     # 창의성 정도 (높을수록 더 다양한 표현)
         )
         # 반환된 결과 텍스트 추출 및 반환
@@ -103,7 +105,8 @@ def save_history(input_code, output_code, lang, filename=None, storage_type="loc
     """    
     os.makedirs("data", exist_ok=True)
     today = datetime.now().strftime("%Y%m%d")
-    file_path = f"data/history_{today}.jsonl"
+    # file_path = f"data/history_{today}.jsonl"
+    filepath = os.path.join("data", f"history_{today}.jsonl")
     # 공통 로그 구조 생성
     log = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # 현재 시간
@@ -114,7 +117,7 @@ def save_history(input_code, output_code, lang, filename=None, storage_type="loc
     if filename:
         log["filename"] = filename  # 원본 파일 이름이 있으면 포함
 
-    if storage_type == "local":
+    if storage_type == "로컬":
         # 로컬 저장소: data 폴더 아래 jsonl 파일 생성 (날짜별)
         os.makedirs("data", exist_ok=True)
         today = datetime.now().strftime("%Y-%m-%d")
@@ -124,7 +127,7 @@ def save_history(input_code, output_code, lang, filename=None, storage_type="loc
         with open(filepath, "a", encoding="utf-8") as f:
             f.write(json.dumps(log, ensure_ascii=False) + "\n")
 
-    elif storage_type == "blob":
+    elif storage_type == "클라우드(Blob 저장소)":
         # Azure Blob 저장소에 저장 요청
         save_history_to_blob(log)
 

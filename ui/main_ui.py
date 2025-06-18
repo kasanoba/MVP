@@ -132,7 +132,7 @@ def main():
                 input_method = st.radio("입력 방식 선택", ["직접 입력", "파일 업로드"], key="input_method")
             with input_col2:
                 # 변환 이력 저장 위치 선택: 로컬 또는 Azure Blob
-                storage_option = st.radio("변환 이력 저장 위치 선택", ["local", "blob"], key="storage_option")
+                storage_option = st.radio("변환 이력 저장 위치 선택", ["로컬", "클라우드(Blob 저장소)"], key="storage_option")
 
             cobol_code = ""
             uploaded_filename = None
@@ -176,14 +176,14 @@ def main():
         col1, col2 = st.columns(2)
         with col1:
             # 변환 이력 저장 위치 선택 (로컬 또는 Blob)
-            history_source = st.radio("이력 저장 위치 선택", ["local", "blob"], horizontal=True, key="history_source")
+            history_source = st.radio("이력 저장 위치 선택", ["로컬", "클라우드(Blob 저장소)"], horizontal=True, key="history_source")
         with col2:
             # 조회 유형 선택: 모두 / 건별(단일 변환) / 일괄 변환
             filter_mode = st.radio("조회 유형 선택", ["모두", "건별", "파일"], horizontal=True, key="history_filter_mode")
 
          # 조회 유형에 따라 로그 필터링 함수
         def filter_logs_by_mode(logs, mode):
-            if mode == "건별":
+            if mode == "직접입력":
                 return [log for log in logs if "filename" not in log]
             elif mode == "파일":
                 return [log for log in logs if "filename" in log]
@@ -191,7 +191,7 @@ def main():
                 return logs
 
         # 로컬에 저장된 jsonl 파일 리스트 불러오기
-        if history_source == "local":
+        if history_source == "로컬":
             file_list = sorted(glob.glob("data/history_*.jsonl"), reverse=True)
             if not file_list:
                 st.info("저장된 변환 이력이 없습니다.")
@@ -222,8 +222,8 @@ def main():
                         st.error(f"이력 파일을 불러오는 중 오류가 발생했습니다: {e}")
 
         # Azure Blob Storage에서 변환 이력 조회
-        elif history_source == "blob":
-            st.info("Azure Blob Storage에 저장된 변환 이력을 조회합니다.")
+        elif history_source == "클라우드(Blob 저장소)":
+            st.info("클라우드(Blob 저장소)에 저장된 변환 이력을 조회합니다.")
 
             try:
                 container_client = blob_service_client.get_container_client(container_name)
@@ -232,7 +232,7 @@ def main():
                 blob_list = sorted(blob_list, reverse=True)
 
                 if not blob_list:
-                    st.info("Blob 컨테이너에 저장된 변환 이력이 없습니다.")
+                    st.info("클라우드(Blob 저장소)에 저장된 변환 이력이 없습니다.")
                 else:
                     # Blob 이력 파일 선택 UI
                     selected_blob = st.selectbox(
@@ -256,7 +256,7 @@ def main():
                             for idx, item in enumerate(reversed(filtered_logs), 1):
                                 display_log_item(item, idx)
             except Exception as e:
-                st.error(f"Blob 저장소에서 변환 이력을 불러오는 중 오류가 발생했습니다: {e}")
+                st.error(f"클라우드(Blob 저장소)에서 변환 이력을 불러오는 중 오류가 발생했습니다: {e}")
 
     # 3. 일괄전환
     with tabs[2]:
