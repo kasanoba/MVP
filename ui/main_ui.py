@@ -304,7 +304,12 @@ def main():
 
             st.markdown(f"**전체 파일 수:** {total_files}")
             st.markdown(f"**전체 토큰 수:** {total_tokens}")
-
+            
+            # 예상 비용 계산 (예: 1000 토큰 당 0.002 USD)
+            cost_per_1000_tokens = 0.002
+            estimated_cost = (total_tokens / 1000) * cost_per_1000_tokens
+            st.markdown(f"**예상 비용: ${estimated_cost:.4f} (1000 토큰 당 ${cost_per_1000_tokens}) (예: 1000 토큰 당 0.002 USD)**")
+            
             st.markdown("#### 파일별 토큰 수")
             file_data = {
                 "파일 경로": [os.path.relpath(f[0], root_dir) for f in file_token_list],

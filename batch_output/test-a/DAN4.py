@@ -1,16 +1,12 @@
-다음은 COBOL 코드를 Python으로 변환한 예제입니다. 
+아래는 COBOL 코드를 Python으로 변환한 것입니다. 가독성을 고려하여 작성하였습니다.
 
 ```python
-def main():
-    i = 1
-    
-    while i <= 9:
-        result = 4 * i
-        print(f"4 * {i} = {result}")
-        i += 1
+i = 1
 
-if __name__ == "__main__":
-    main()
-```
+while i <= 9:
+    result = 4 * i
+    print(f"4 * {i} = {result}")
+    i += 1
+``` 
 
-이 코드는 COBOL 프로그램과 동일한 기능을 수행하며, 가독성을 고려하여 작성되었습니다.
+이 코드는 COBOL의 반복문과 계산을 Python의 `while` 루프와 `print` 함수로 표현하였습니다.

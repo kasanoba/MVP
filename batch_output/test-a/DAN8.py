@@ -1,4 +1,4 @@
-다음은 주어진 COBOL 코드를 Python으로 변환한 코드입니다.
+다음은 COBOL 코드를 Python 코드로 변환한 예입니다.
 
 ```python
 def main():
@@ -12,4 +12,4 @@ if __name__ == "__main__":
     main()
 ``` 
 
-이 코드는 COBOL 코드의 기능을 그대로 유지하면서 Python 문법에 맞게 작성되었습니다.
+이 코드는 COBOL 프로그램의 기능을 Python으로 재구현한 것으로, 1부터 9까지의 숫
