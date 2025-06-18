@@ -179,13 +179,13 @@ def main():
             history_source = st.radio("이력 저장 위치 선택", ["local", "blob"], horizontal=True, key="history_source")
         with col2:
             # 조회 유형 선택: 모두 / 건별(단일 변환) / 일괄 변환
-            filter_mode = st.radio("조회 유형 선택", ["모두", "건별", "일괄"], horizontal=True, key="history_filter_mode")
+            filter_mode = st.radio("조회 유형 선택", ["모두", "건별", "파일"], horizontal=True, key="history_filter_mode")
 
          # 조회 유형에 따라 로그 필터링 함수
         def filter_logs_by_mode(logs, mode):
             if mode == "건별":
                 return [log for log in logs if "filename" not in log]
-            elif mode == "일괄":
+            elif mode == "파일":
                 return [log for log in logs if "filename" in log]
             else:
                 return logs
