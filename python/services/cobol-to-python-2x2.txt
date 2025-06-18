@@ -1,0 +1,14 @@
+다음은 COBOL 코드를 `./batch_output` 형식으로 변환한 예시입니다. 가독성을 높이고 주석을 최소화하였습니다.
+
+```bash
+#!/bin/bash
+
+echo "=== 구구단 2단 ==="
+
+for (( i=1; i<=9; i++ )); do
+    result=$(( 2 * i ))
+    echo "2 x $i = $result"
+done
+```
+
+이 스크립트는 Bash

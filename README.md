@@ -30,7 +30,8 @@ mvp/
 │   └── main_ui.py         # Streamlit UI 및 탭별 기능
 ├── run_app.py             # 앱 실행 진입점
 ├── requirements.txt       # 필요한 패키지 목록 (아래 참고)
-└── .env                   # 환경변수 파일 (API KEY 등)
+├── .env                   # 환경변수 파일 (API KEY 등)
+└── streamlit.sh
 ```
 
 ### requirements.txt
