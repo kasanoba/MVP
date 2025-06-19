@@ -8,6 +8,7 @@
 
 - **언어전환**  
   - COBOL 코드를 직접 입력하거나 파일로 업로드하여 Python/Java 등으로 변환
+  - OpenAI Chat API 호출 전 기존 변환 이력을 먼저 조회하여 보여줌으로써 자원 과소비 방지
 - **변환 이력 조회**  
   - 변환 이력 파일을 선택하여 과거 변환 내역을 조회
 - **일괄전환**  
@@ -44,7 +45,6 @@ requests
 azure-storage-blob
 tiktoken
 ```
-(필요에 따라 추가 패키지 직접 등록)
 
 ---
 
@@ -59,7 +59,7 @@ tiktoken
     ```
     OPENAI_API_KEY=sk-xxxxxxx
     OPENAI_ENDPOINT=https://api.openai.com/v1
-    CHAT_MODEL=gpt-4o
+    CHAT_MODEL=gpt-4o-mini
     AZURE_STORAGE_CONNECTION_STRING=your_connection_string  # Blob 저장 시 필요
     CONTAINER_NAME=your_container_name                      # Blob 저장 시 필요
     ```
@@ -75,23 +75,29 @@ tiktoken
 ## 사용자 흐름
 
 1. **앱 접속 및 환경변수 확인**
-2. **탭 선택**
-    - 언어전환: COBOL 코드 입력/업로드 → 변환 실행
-    - 변환 이력 조회: 이력 파일 선택 → 변환 내역 확인
-    - 일괄전환:  
-        1. root 디렉토리 입력  
-        2. "디렉토리 현황 조회"로 전체 구조/파일수/용량/예상비용 확인  
-        3. 변환 언어 및 결과 저장 경로 입력  
-        4. "일괄 변환 실행"으로 진행률, 성공/실패 현황, 실패 파일 리스트 확인
+2. **화면 로딩시 Blob service에 컨테이너 생성여부 확인하여 "data"이름으로 생성**
+3. **탭 선택**
+    - **언어전환**:  
+        1. COBOL 코드 입력/파일 업로드  
+        2. 기존 변환 결과 조회 및 재사용 여부 결정  
+        3. 변환 실행 및 결과 확인
+    - **변환 이력 조회**:  
+        1. 이력 저장 위치(로컬/클라우드) 선택  
+        2. 이력 파일 선택 후 조회 유형(직접입력/파일) 필터링하여 내역 확인
+    - **일괄전환**:  
+        1. COBOL 소스 ZIP 업로드  
+        2. ZIP 파일내의 디렉토리 분석 결과(파일 수, 토큰 수, 예상 비용 등) 확인  
+        3. 변환 언어 선택 및 변환 실행  
+        4. 결과 ZIP 다운로드
 3. **결과 확인 및 추가 작업**
 
 ---
 
 ## 사용된 기술 스택
 
-- Python 3.x  
+- Python 3.11
 - Streamlit (웹 UI)  
-- OpenAI API (GPT-4o)  
+- OpenAI API (GPT-4o-mini)  
 - Azure Blob Storage (옵션, 변환 결과 저장용)  
 - python-dotenv (환경변수 관리)  
 - 표준 Python 라이브러리 (os, json 등)
