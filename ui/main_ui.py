@@ -92,16 +92,18 @@ def main():
 
     # Azure Blob 컨테이너 존재 확인 및 생성 처리 (앱 최초 실행시만)
     if "container_checked" not in st.session_state:
-        try:
-            container_client = blob_service_client.get_container_client(container_name)
-            if not container_client.exists():
-                container_client.create_container()
-                # st.info(f"✅ Azure Blob 컨테이너 `{container_name}` 생성됨")
-            # else:
-                # st.info(f"🔎 Azure Blob 컨테이너 `{container_name}` 이미 존재함")
-        except Exception as e:
-            st.error(f"❌ 컨테이너 확인/생성 중 오류 발생: {e}")
-        st.session_state["container_checked"] = True
+        with st.spinner("☁️ Azure Blob 컨테이너 상태 확인 중..."):
+            try:
+                container_client = blob_service_client.get_container_client(container_name)
+                if not container_client.exists():
+                    container_client.create_container()
+                    # st.success(f"✅ Azure Blob 컨테이너 `{container_name}` 생성 완료")
+                # else:
+                #     st.info(f"🔎 Azure Blob 컨테이너 `{container_name}` 이미 존재합니다")
+            except Exception as e:
+                st.error(f"컨테이너 확인/생성 중 오류 발생: {e}")
+            st.session_state["container_checked"] = True
+
 
     # 탭 이름 리스트 
     tab_titles = [
