@@ -1,10 +1,10 @@
 import os
-import openai  # OpenAI API 사용
-import json
-from dotenv import load_dotenv, find_dotenv  # 환경 변수(.env 파일)를 불러오기 위한 라이브러리
-from datetime import datetime  # 날짜와 시간 관련 기능
-from azure.storage.blob import BlobServiceClient  # Azure Blob 저장소 연동
-
+import openai  # OpenAI API 사용 위한 라이브러리
+import json  # JSON 형식 입출력 처리용
+from dotenv import load_dotenv, find_dotenv  # .env 파일에서 환경 변수 로드
+from datetime import datetime  # 현재 날짜/시간 처리
+from azure.storage.blob import BlobServiceClient  # Azure Blob Storage 연동용
+import glob  # 파일 패턴 매칭 및 검색용
 
 # .env 파일을 찾아서 환경 변수로 로드 (API 키 등 외부 노출 금지 정보를 보관)
 load_dotenv(find_dotenv())
@@ -30,37 +30,15 @@ blob_service_client = BlobServiceClient.from_connection_string(conn_str)
 """
 code_conversion_service.py
 
-이 모듈은 COBOL 소스 코드의 단일 파일 변환 기능을 제공합니다.
-(예: COBOL → Python, COBOL → Java 등)
-
-[공통 기능]
-1. 입력값 또는 선택된 파일을 OpenAI GPT API를 통해 변환
-2. local 저장소 또는 Azure Blob Storage에 변환 이력 저장
-
-[주요 기능]
-1. 단일 COBOL 코드 변환 (convert_cobol_code)
-   - 입력받은 COBOL 소스 코드를 지정한 언어(Python, Java 등)로 변환합니다.
-   - 실제 변환은 OpenAI GPT API 등 외부 변환 엔진을 활용할 수 있습니다.
-
-2. 변환 이력 저장 (save_history)
-   - 변환 요청 시 입력 코드, 변환 결과, 변환 언어, 타임스탬프등을 이력 파일(jsonl)에 저장합니다.
-
-[함수별 설명]
-convert_cobol_code(cobol_code: str, target_lang: str) -> str
-    - 입력된 COBOL 코드를 OpenAI GPT 모델을 사용해 Python 또는 Java 코드로 변환합니다.
-    - 변환 요청은 프롬프트 기반으로 처리되며, 결과 코드는 가독성 위주로 생성됩니다.
-
-save_history(input_code, output_code, lang, filename=None, storage_type="local")
-    - 변환 요청의 입력/출력 코드, 언어, 시간 등의 이력을 저장합니다.
-    - 저장 위치는 로컬 또는 Azure Blob Storage 중 선택할 수 있습니다.
-
-save_history_to_blob(log: dict)
-    - 변환 이력을 Azure Blob Storage에 JSONL 형식으로 저장합니다.
-    - 기존 이력이 있으면 내용을 병합하여 업데이트합니다
+주요 함수:
+- convert_cobol_code : COBOL 코드를 OpenAI GPT를 통해 변환
+- save_history       : 변환 요청 이력 저장 (로컬 또는 클라우드)
+- save_history_to_blob: 클라우드 저장 전용 함수
+- find_existing_history: 기존 이력 중 동일 코드 및 언어 변환 결과 조회
             
 """
 
-# COBOL 코드 변환 함수
+# COBOL 코드를 OpenAI GPT를 통해 변환
 def convert_cobol_code(cobol_code: str, target_lang: str) -> str:
     """
     사용자가 입력한 COBOL 코드를 OpenAI GPT 모델을 통해 Python 또는 Java 코드로 변환합니다.
@@ -68,7 +46,7 @@ def convert_cobol_code(cobol_code: str, target_lang: str) -> str:
     # 입력값 검증: 둘 중 하나라도 누락되면 오류 메시지 반환
     if not cobol_code or not target_lang:
         return "# 변환할 COBOL 코드와 대상 언어를 선택하세요."
-    # 대상 언어에 따라 주석처리 변환 : PYTHON 은 '#' , JAVA 는 '//'
+    # 타겟 언어에 따른 주석 문법 결정 ('#' or '//')
     comment_prefix = "#" if target_lang.lower() == "python" else "//"
 
     # GPT 모델에 전달할 변환 요청 프롬프트 생성  
@@ -95,7 +73,7 @@ def convert_cobol_code(cobol_code: str, target_lang: str) -> str:
             max_tokens=1000,     # 반환될 응답 최대 토큰 수
             temperature=0.7     # 창의성 정도 (높을수록 더 다양한 표현)
         )
-        # 반환된 결과 텍스트 추출 및 반환
+        # GPT 응답에서 변환된 코드 부분만 추출해 반환
         return response.choices[0].message.content.strip()
 
     except Exception as e:
@@ -104,16 +82,20 @@ def convert_cobol_code(cobol_code: str, target_lang: str) -> str:
         return f"# 변환 중 오류 발생: {e}"
     
 
-#변환 이력 저장 
+# 변환 요청 이력 저장 (로컬 또는 클라우드)
 def save_history(input_code, output_code, lang, filename=None, storage_type="로컬"):
     """
     변환 이력을 저장합니다. 로컬(jsonl) 또는 Azure Blob Storage 중 선택 가능.
     """    
+    
+    # 변환 이력 저장용 디렉토리 생성 (없으면 생성)
     os.makedirs("data", exist_ok=True)
+    
+    # 현재 날짜(년월일) 문자열 생성 (예: "20230619")
     today = datetime.now().strftime("%Y%m%d")
     # file_path = f"data/history_{today}.jsonl"
     filepath = os.path.join("data", f"history_{today}.jsonl")
-    # 공통 로그 구조 생성
+    # 변환 이력 로그 항목 구조
     log = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # 현재 시간
         "input": input_code,    # 입력된 COBOL 코드
@@ -129,22 +111,22 @@ def save_history(input_code, output_code, lang, filename=None, storage_type="로
         today = datetime.now().strftime("%Y-%m-%d")
         filepath = os.path.join("data", f"history_{today}.jsonl")
 
-        # jsonl 형식으로 파일에 한 줄씩 기록
+        # 로컬 저장소 처리: 날짜별 JSONL 파일에 한 줄씩 append
         with open(filepath, "a", encoding="utf-8") as f:
             f.write(json.dumps(log, ensure_ascii=False) + "\n")
 
     elif storage_type == "클라우드(Blob 저장소)":
-        # Azure Blob 저장소에 저장 요청
+        # 클라우드 저장소(Azure Blob)에 저장
         save_history_to_blob(log)
 
     
     
-#Azure Blob Storage 저장용    
+# 클라우드 저장 전용 함수
 def save_history_to_blob(log):
     """
     변환 이력을 Azure Blob Storage의 jsonl 파일에 저장합니다.
     """    
-    # 저장할 blob 파일 이름 설정 (날짜별)
+    # Blob 파일명: 날짜별 (예: history_2023-06-19.jsonl)
     today = datetime.now().strftime("%Y-%m-%d")
     blob_name = f"history_{today}.jsonl"
 
@@ -159,9 +141,56 @@ def save_history_to_blob(log):
         # 기존 blob이 없으면 빈 리스트로 초기화
         lines = []
 
-    # 새로운 이력을 추가
+    # 새 로그를 JSON 문자열로 변환해 리스트에 추가
     lines.append(json.dumps(log, ensure_ascii=False))
     new_content = "\n".join(lines)
 
     # 이력을 blob에 업로드 (덮어쓰기 방식)
     blob_client.upload_blob(new_content, overwrite=True)
+    
+# 기존 이력 중 동일 코드 및 언어 변환 결과 조회
+def find_existing_history(input_code, filename, storage_option, target_lang):
+    """
+    저장된 변환 이력에서 동일한 입력 코드 및 변환 언어가 일치하는 로그를 검색
+    filename은 선택 사항이며, 있을 경우 일치 여부를 추가 확인
+    """
+    logs = []
+
+    # 저장 위치별 로그 불러오기 (로컬 또는 Blob)
+    if storage_option == "로컬":
+        # data 폴더 내 history_*.jsonl 파일 리스트를 날짜 내림차순으로 정렬
+        file_list = sorted(glob.glob("data/history_*.jsonl"), reverse=True)
+        for file_path in file_list:
+            try:
+                with open(file_path, encoding="utf-8") as f:
+                    # 파일 내 각 라인을 JSON으로 파싱해 logs 리스트에 추가
+                    for line in f:
+                        if line.strip():
+                            logs.append(json.loads(line))
+            except:
+                # 파일 읽기 오류 무시하고 계속 진행
+                continue
+    else:
+        # 클라우드 Blob Storage에서 history_*.jsonl 파일 리스트 조회 후 내용 읽기
+        try:
+            container_client = blob_service_client.get_container_client(container_name)
+            blob_list = [blob.name for blob in container_client.list_blobs() if blob.name.startswith("history_") and blob.name.endswith(".jsonl")]
+            blob_list = sorted(blob_list, reverse=True)
+            for blob_name in blob_list:
+                blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+                content = blob_client.download_blob().readall().decode("utf-8")
+                for line in content.splitlines():
+                    if line.strip():
+                        logs.append(json.loads(line))
+        except:
+            # Blob 조회 오류 시 무시
+            pass
+
+    # 불러온 로그 중에서 입력값과 언어가 동일한 로그 탐색
+    for log in logs:
+        if log.get("input", "").strip() == input_code.strip() and log.get("lang") == target_lang:
+            # filename 조건이 있으면 비교, 없으면 무시
+            if filename is None or log.get("filename") == filename:
+                return log
+
+    return None
