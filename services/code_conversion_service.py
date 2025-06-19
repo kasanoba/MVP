@@ -68,16 +68,18 @@ def convert_cobol_code(cobol_code: str, target_lang: str) -> str:
     # 입력값 검증: 둘 중 하나라도 누락되면 오류 메시지 반환
     if not cobol_code or not target_lang:
         return "# 변환할 COBOL 코드와 대상 언어를 선택하세요."
+    # 대상 언어에 따라 주석처리 변환 : PYTHON 은 '#' , JAVA 는 '//'
+    comment_prefix = "#" if target_lang.lower() == "python" else "//"
 
     # GPT 모델에 전달할 변환 요청 프롬프트 생성  
     prompt = (
         f"다음 입력은 COBOL 코드입니다. 이를 {target_lang.capitalize()} 코드로 변환해주세요.\n"
         "단, 입력된 텍스트가 명백히 일기, 뉴스, 일반 문장 등 자연어 기반의 글일 경우에만\n"
-        "'해당 입력은 COBOL 코드가 아닙니다.\\nCOBOL 코드만 변환이 가능합니다.'라고 응답하세요.\n"
+        f"'해당 입력은 COBOL 코드가 아닙니다.\\nCOBOL 코드만 변환이 가능합니다.'라고 응답하세요.\n"
         "**CALL 문이나 간단한 구조만으로 이루어진 코드라도 COBOL 형식을 따르면 반드시 변환하세요.**\n"
         "변환된 결과는 반드시 마크다운 코드 블럭 없이 출력하고, 전체 응답은 일반 텍스트 형식이어야 합니다.\n"
         "변환된 코드는 전체를 하나의 텍스트 블록으로, 코드 블록 마크다운(```) 없이 출력하세요.\n"
-        "코드 외의 설명은 모두 '#' 주석으로 시작해서 작성해주세요.\n"
+        f"코드 외의 설명은 모두 '{comment_prefix}' 주석으로 시작해서 작성해주세요.\n"
         "COBOL 주석(`*`)이 포함되어 있어도 정상적인 코드로 간주하고 변환 대상에 포함하세요.\n"
         "코드에는 필요한 최소한의 주석만 포함해주세요.\n\n"
         f"COBOL 코드:\n{cobol_code.strip()}\n"
