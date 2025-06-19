@@ -5,6 +5,7 @@ from dotenv import load_dotenv, find_dotenv  # .env 파일에서 환경 변수 �
 from datetime import datetime  # 현재 날짜/시간 처리
 from azure.storage.blob import BlobServiceClient  # Azure Blob Storage 연동용
 import glob  # 파일 패턴 매칭 및 검색용
+import re
 
 # .env 파일을 찾아서 환경 변수로 로드 (API 키 등 외부 노출 금지 정보를 보관)
 load_dotenv(find_dotenv())
@@ -148,33 +149,50 @@ def save_history_to_blob(log):
     # 이력을 blob에 업로드 (덮어쓰기 방식)
     blob_client.upload_blob(new_content, overwrite=True)
     
-# 기존 이력 중 동일 코드 및 언어 변환 결과 조회
+    
+    
+# 기존 이력에서 동일 코드 및 언어 변환 결과 조회
+def normalize_code(code):
+    """
+    코드 문자열 정규화: 줄바꿈 통일, 앞뒤 공백 제거, 연속 공백 축소
+    """
+    code = code.replace('\r\n', '\n').replace('\r', '\n')
+    code = code.strip()
+    code = re.sub(r'\s+', ' ', code)
+    return code
+
+# 파일명 정규화: OS 표준 경로 구분자 사용, 소문자 변환
+def normalize_filename(fname):
+    """
+    파일명 정규화: OS 표준 경로 구분자 사용, 소문자 변환
+    """
+    if fname is None:
+        return None
+    return os.path.normpath(fname).lower()
+
+# 기존 변환 이력에서 동일한 입력 코드 및 변환 언어가 일치하는 로그 검색
 def find_existing_history(input_code, filename, storage_option, target_lang):
     """
     저장된 변환 이력에서 동일한 입력 코드 및 변환 언어가 일치하는 로그를 검색
-    filename은 선택 사항이며, 있을 경우 일치 여부를 추가 확인
+    filename은 선택 사항이며, 있을 경우 참고하되 강제 조건은 아님
     """
     logs = []
 
-    # 저장 위치별 로그 불러오기 (로컬 또는 Blob)
     if storage_option == "로컬":
-        # data 폴더 내 history_*.jsonl 파일 리스트를 날짜 내림차순으로 정렬
         file_list = sorted(glob.glob("data/history_*.jsonl"), reverse=True)
         for file_path in file_list:
             try:
                 with open(file_path, encoding="utf-8") as f:
-                    # 파일 내 각 라인을 JSON으로 파싱해 logs 리스트에 추가
                     for line in f:
                         if line.strip():
                             logs.append(json.loads(line))
             except:
-                # 파일 읽기 오류 무시하고 계속 진행
                 continue
     else:
-        # 클라우드 Blob Storage에서 history_*.jsonl 파일 리스트 조회 후 내용 읽기
         try:
             container_client = blob_service_client.get_container_client(container_name)
-            blob_list = [blob.name for blob in container_client.list_blobs() if blob.name.startswith("history_") and blob.name.endswith(".jsonl")]
+            blob_list = [blob.name for blob in container_client.list_blobs()
+                         if blob.name.startswith("history_") and blob.name.endswith(".jsonl")]
             blob_list = sorted(blob_list, reverse=True)
             for blob_name in blob_list:
                 blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
@@ -183,14 +201,23 @@ def find_existing_history(input_code, filename, storage_option, target_lang):
                     if line.strip():
                         logs.append(json.loads(line))
         except:
-            # Blob 조회 오류 시 무시
             pass
 
-    # 불러온 로그 중에서 입력값과 언어가 동일한 로그 탐색
+    norm_input_code = normalize_code(input_code)
+    norm_filename = normalize_filename(filename)
+
     for log in logs:
-        if log.get("input", "").strip() == input_code.strip() and log.get("lang") == target_lang:
-            # filename 조건이 있으면 비교, 없으면 무시
-            if filename is None or log.get("filename") == filename:
+        log_input = normalize_code(log.get("input", ""))
+        log_lang = log.get("lang")
+        log_filename = normalize_filename(log.get("filename"))
+
+        if log_input == norm_input_code and log_lang == target_lang:
+            # 직접 입력: filename 없으면 일치
+            if norm_filename is None:
+                if log_filename is None:
+                    return log
+            else:
+                # 파일 업로드: filename 달라도 동일 코드+언어면 인정
                 return log
 
     return None
