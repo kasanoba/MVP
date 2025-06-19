@@ -126,13 +126,18 @@ def main():
         col_left, col_right = st.columns([1, 1]) # 좌우 2개 컬럼 분할 UI
         with col_left:
             st.subheader("COBOL 코드 입력")
-            input_col1, input_col2 = st.columns([1, 1])
+            
+            # 입력 방식, 저장 위치, 변환 언어 선택을 한 줄에 배치
+            input_col1, input_col2, input_col3 = st.columns([1, 1, 1])
             with input_col1:
                  # COBOL 코드 입력 방식 선택: 직접 입력 또는 파일 업로드
                 input_method = st.radio("입력 방식 선택", ["직접 입력", "파일 업로드"], key="input_method")
             with input_col2:
                 # 변환 이력 저장 위치 선택: 로컬 또는 Azure Blob
                 storage_option = st.radio("변환 이력 저장 위치 선택", ["로컬", "클라우드(Blob 저장소)"], key="storage_option")
+            with input_col3:
+                # 변환 언어 선택: python 또는 java
+                target_lang = st.selectbox("변환 언어 선택", ["python", "java"], key="target_lang")                   
 
             cobol_code = ""
             uploaded_filename = None
@@ -151,8 +156,6 @@ def main():
                         st.error("파일을 읽는 중 오류가 발생했습니다. 인코딩을 확인하세요.")
                         cobol_code = ""
                     cobol_code = st.text_area("업로드된 COBOL 코드(수정 가능)", cobol_code, height=300, key="uploaded_cobol_code")
-            # 변환 목표 언어 선택 (python, java)
-            target_lang = st.selectbox("변환 언어 선택", ["python", "java"], key="target_lang")
 
         with col_right:
             st.subheader("코드 변환 결과")
