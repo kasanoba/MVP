@@ -71,7 +71,7 @@ def analyze_cobol_files(root_dir):
 
 
 # 일괄 변환
-def batch_convert_cobol(root_dir, target_lang, output_root, progress_callback=None, storage_option="local"):
+def batch_convert_cobol(root_dir, target_lang, output_root, progress_callback=None, storage_option="로컬"):
     """
     지정한 루트 디렉토리(root_dir) 내 COBOL 소스 파일을
     target_lang (예: python, java)으로 일괄 변환하여 output_root 경로에 저장하거나
@@ -102,7 +102,7 @@ def batch_convert_cobol(root_dir, target_lang, output_root, progress_callback=No
     # Azure Blob Storage 초기화 (blob 저장 옵션인 경우)
     blob_service_client = None
     container_name = None
-    if storage_option == "blob":
+    if storage_option == "클라우드(Blob 저장소)":
         conn_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")  # 환경변수에서 연결 문자열 읽기
         container_name = os.getenv("CONTAINER_NAME")             # 환경변수에서 컨테이너명 읽기
         if not conn_str or not container_name:
@@ -147,7 +147,7 @@ def batch_convert_cobol(root_dir, target_lang, output_root, progress_callback=No
                     new_filename = os.path.splitext(filename)[0] + new_ext  # 확장자 변경
 
                     # 로컬 저장 옵션 처리
-                    if storage_option == "local":
+                    if storage_option == "로컬":
                         save_dir = os.path.join(output_root, rel_path)
                         os.makedirs(save_dir, exist_ok=True)  # 폴더가 없으면 생성
                         save_path = os.path.join(save_dir, new_filename)
@@ -161,11 +161,11 @@ def batch_convert_cobol(root_dir, target_lang, output_root, progress_callback=No
                             output_code=converted_code,
                             lang=target_lang,
                             filename=os.path.join(rel_path, filename),
-                            storage_type="local"
+                            storage_type="로컬"
                         )
 
                     # Azure Blob Storage 저장 옵션 처리
-                    elif storage_option == "blob":
+                    elif storage_option == "클라우드(Blob 저장소)":
                         # Blob 경로는 슬래시(/) 구분자로 변경
                         blob_path = os.path.join(rel_path, new_filename).replace("\\", "/")
                         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
@@ -178,7 +178,7 @@ def batch_convert_cobol(root_dir, target_lang, output_root, progress_callback=No
                             output_code=converted_code,
                             lang=target_lang,
                             filename=os.path.join(rel_path, filename),
-                            storage_type="blob"
+                            storage_type="클라우드(Blob 저장소)"
                         )
 
                     # 변환 성공한 파일 목록에 추가

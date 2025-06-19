@@ -67,7 +67,7 @@ def convert_cobol_code(cobol_code: str, target_lang: str) -> str:
     """
     # 입력값 검증: 둘 중 하나라도 누락되면 오류 메시지 반환
     if not cobol_code or not target_lang:
-        return "# 변환할 COBOL 코드와 대상 언어를 모두 입력하세요."
+        return "# 변환할 COBOL 코드와 대상 언어를 선택하세요."
 
     # GPT 모델에 전달할 변환 요청 프롬프트 생성  
     prompt = (
@@ -99,7 +99,7 @@ def convert_cobol_code(cobol_code: str, target_lang: str) -> str:
     
 
 #변환 이력 저장 
-def save_history(input_code, output_code, lang, filename=None, storage_type="local"):
+def save_history(input_code, output_code, lang, filename=None, storage_type="로컬"):
     """
     변환 이력을 저장합니다. 로컬(jsonl) 또는 Azure Blob Storage 중 선택 가능.
     """    
