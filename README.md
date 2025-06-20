@@ -2,6 +2,7 @@
 
 이 프로젝트는 COBOL 소스 코드를 Python/Java 등으로 변환하고, 변환 이력 관리 및 일괄 변환 기능을 제공하는 Streamlit 기반 웹 애플리케이션입니다.
 
+**접속URL:https://sungok-web-002-bndxhdcff4ctgdbe.canadacentral-01.azurewebsites.net/**  
 ---
 
 ## 주요 기능
