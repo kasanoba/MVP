@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 기반 COBOL 소스 일괄 변환 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow: hidden;
+        }
+        
+        .presentation-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .slide {
+            flex: 1;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            margin: 20px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: none;
+            overflow-y: auto;
+            animation: slideIn 0.5s ease-in-out;
+        }
+        
+        .slide.active {
+            display: block;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .slide h1 {
+            color: #4a5568;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+        }
+        
+        .slide h2 {
+            color: #2d3748;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            border-left: 5px solid #667eea;
+            padding-left: 15px;
+        }
+        
+        .slide h3 {
+            color: #4a5568;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            margin-top: 20px;
+        }
+        
+        .slide p, .slide li {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .slide ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .slide li {
+            margin-bottom: 8px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-card h3 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        
+        .tech-item {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .architecture-diagram {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .flow-step {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .flow-step::after {
+            content: '↓';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            color: #48bb78;
+        }
+        
+        .flow-step:last-child::after {
+            display: none;
+        }
+        
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nav-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .nav-btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .slide-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #4a5568;
+            z-index: 1000;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #ffd89b 0%, #19547b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+        
+        .benefits-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .benefit-item {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="slide-counter">
+            <span id="currentSlide">1</span> / <span id="totalSlides">10</span>
+        </div>
+        
+        <!-- 슬라이드 1: 타이틀 -->
+        <div class="slide active">
+            <h1>🚀 AI 기반 COBOL 소스<br>일괄 변환 및 개발 지원 에이전트</h1>
+            <div style="text-align: center; margin-top: 50px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 30px; border-radius: 15px; display: inline-block;">
+                    <h2 style="color: white; border: none; margin: 0;">레거시 시스템 현대화를 위한<br>지능형 코드 변환 솔루션</h2>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 40px; font-size: 1.2rem; color: #4a5568;">
+                <p>🔧 Streamlit 기반 웹 애플리케이션</p>
+                <p>🤖 OpenAI GPT-4o-mini 활용</p>
+                <p>☁️ Azure Blob Storage 연동</p>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 2: 프로젝트 개요 -->
+        <div class="slide">
+            <h1>📋 프로젝트 개요</h1>
+            <h2>🎯 목적</h2>
+            <p>금융권 및 대기업의 레거시 COBOL 시스템을 현대적인 프로그래밍 언어(Python, Java)로 효율적으로 변환하여 시스템 현대화를 지원합니다.</p>
+            
+            <h2>🌟 핵심 가치</h2>
+            <div class="benefits-list">
+                <div class="benefit-item">
+                    <strong>⚡ 효율성</strong><br>
+                    수동 변환 대비 90% 시간 단축
+                </div>
+                <div class="benefit-item">
+                    <strong>💡 지능성</strong><br>
+                    AI 기반 정확한 코드 변환
+                </div>
+                <div class="benefit-item">
+                    <strong>📊 투명성</strong><br>
+                    변환 이력 및 비용 추적
+                </div>
+                <div class="benefit-item">
+                    <strong>🔒 안정성</strong><br>
+                    일괄 처리 및 오류 관리
+                </div>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 3: 주요 기능 -->
+        <div class="slide">
+            <h1>⚙️ 주요 기능</h1>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🔄 언어전환</h3>
+                    <ul>
+                        <li>COBOL → Python/Java 변환</li>
+                        <li>직접 입력 또는 파일 업로드</li>
+                        <li>기존 변환 이력 조회 및 재사용</li>
+                        <li>API 호출 최적화로 비용 절감</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>📚 변환 이력 조회</h3>
+                    <ul>
+                        <li>과거 변환 내역 조회</li>
+                        <li>로컬/클라우드 저장소 지원</li>
+                        <li>변환 유형별 필터링</li>
+                        <li>상세 변환 정보 제공</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>📦 일괄전환</h3>
+                    <ul>
+                        <li>디렉토리 전체 파일 일괄 변환</li>
+                        <li>ZIP 파일 업로드/다운로드</li>
+                        <li>실시간 진행률 표시</li>
+                        <li>예상 비용 및 토큰 수 안내</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>🏛️ 금융권 규정 검토</h3>
+                    <ul>
+                        <li>금융권 코딩 규정 준수 검토</li>
+                        <li>보안 가이드라인 검증</li>
+                        <li>컴플라이언스 체크</li>
+                        <li><em>(추후 구현 예정)</em></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 4: 시스템 아키텍처 -->
+        <div class="slide">
+            <h1>🏗️ 시스템 아키텍처</h1>
+            <div class="architecture-diagram">
+                <h2>📁 폴더 구조</h2>
+                <div class="code-block">
+mvp/
+├── data/                          # 변환 이력(jsonl) 저장
+├── services/
+│   ├── batch_conversion_service.py    # 일괄 변환 서비스
+│   └── code_conversion_service.py     # 단일 변환 서비스
+├── ui/
+│   └── main_ui.py                 # Streamlit UI
+├── run_app.py                     # 앱 실행 진입점
+├── requirements.txt               # 패키지 목록
+├── .env                          # 환경변수
+└── streamlit.sh                  # 실행 스크립트
+                </div>
+            </div>
+            
+            <h2>🔧 핵심 컴포넌트</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>📱 Frontend (UI Layer)</h3>
+                    <ul>
+                        <li>Streamlit 기반 웹 인터페이스</li>
+                        <li>탭 기반 기능 분리</li>
+                        <li>실시간 진행률 표시</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>⚙️ Backend (Service Layer)</h3>
+                    <ul>
+                        <li>코드 변환 서비스</li>
+                        <li>일괄 처리 서비스</li>
+                        <li>이력 관리 서비스</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 5: 기술 스택 -->
+        <div class="slide">
+            <h1>💻 기술 스택</h1>
+            <h2>🐍 Core Technologies</h2>
+            <div class="tech-stack">
+                <div class="tech-item">Python 3.11</div>
+                <div class="tech-item">Streamlit</div>
+                <div class="tech-item">OpenAI API</div>
+                <div class="tech-item">Azure Blob Storage</div>
+            </div>
+            
+            <h2>📚 주요 라이브러리</h2>
+            <div class="code-block">
+streamlit              # 웹 UI 프레임워크
+python-dotenv          # 환경변수 관리
+openai                 # OpenAI API 클라이언트
+aiohttp               # 비동기 HTTP 클라이언트
+requests              # HTTP 요청 라이브러리
+azure-storage-blob    # Azure Blob Storage SDK
+tiktoken              # 토큰 계산 라이브러리
+            </div>
+            
+            <h2>🎯 선택 이유</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>Streamlit</h3>
+                    <ul>
+                        <li>빠른 프로토타이핑</li>
+                        <li>Python 개발자 친화적</li>
+                        <li>풍부한 UI 컴포넌트</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>OpenAI GPT-4o-mini</h3>
+                    <ul>
+                        <li>높은 코드 변환 정확도</li>
+                        <li>비용 효율적</li>
+                        <li>다양한 언어 지원</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 6: 사용자 플로우 -->
+        <div class="slide">
+            <h1>👥 사용자 플로우</h1>
+            <div class="flow-step">
+                <strong>1단계: 🚀 앱 접속</strong><br>
+                환경변수 확인 및 Azure Blob 컨테이너 자동 생성
+            </div>
+            <div class="flow-step">
+                <strong>2단계: 📑 기능 선택</strong><br>
+                언어전환 / 변환 이력 조회 / 일괄전환 중 선택
+            </div>
+            <div class="flow-step">
+                <strong>3단계: 📝 입력</strong><br>
+                COBOL 코드 직접 입력 또는 파일/ZIP 업로드
+            </div>
+            <div class="flow-step">
+                <strong>4단계: 🔍 이력 확인</strong><br>
+                기존 변환 결과 조회 및 재사용 여부 결정
+            </div>
+            <div class="flow-step">
+                <strong>5단계: ⚡ 변환 실행</strong><br>
+                AI 기반 코드 변환 수행 (진행률 표시)
+            </div>
+            <div class="flow-step">
+                <strong>6단계: 📊 결과 확인</strong><br>
+                변환된 코드 검토 및 다운로드
+            </div>
+        </div>
+        
+        <!-- 슬라이드 7: 핵심 특징 -->
+        <div class="slide">
+            <h1>🌟 핵심 특징</h1>
+            
+            <h2>💰 비용 최적화</h2>
+            <div class="benefit-item">
+                <ul>
+                    <li><strong>변환 이력 우선 조회:</strong> API 호출 전 기존 결과 확인</li>
+                    <li><strong>토큰 수 계산:</strong> 변환 전 예상 비용 안내</li>
+                    <li><strong>일괄 처리 최적화:</strong> 효율적인 API 사용</li>
+                </ul>
+            </div>
+            
+            <h2>🔒 안정성 및 보안</h2>
+            <div class="benefit-item">
+                <ul>
+                    <li><strong>예외 처리:</strong> 강력한 오류 처리 메커니즘</li>
+                    <li><strong>진행률 표시:</strong> 실시간 처리 상태 모니터링</li>
+                    <li><strong>환경변수 보안:</strong> API 키 등 민감 정보 안전 관리</li>
+                </ul>
+            </div>
+            
+            <h2>📈 확장성</h2>
+            <div class="benefit-item">
+                <ul>
+                    <li><strong>모듈화 구조:</strong> 서비스 레이어와 UI 분리</li>
+                    <li><strong>클라우드 연동:</strong> Azure Blob Storage 활용</li>
+                    <li><strong>대용량 처리:</strong> 안정적인 일괄 변환 지원</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 8: 실행 방법 -->
+        <div class="slide">
+            <h1>🚀 실행 방법</h1>
+            
+            <h2>1️⃣ 환경 설정</h2>
+            <div class="code-block">
+# 패키지 설치
+pip install -r requirements.txt
+
+# 환경변수 설정 (.env 파일)
+OPENAI_API_KEY=sk-xxxxxxx
+OPENAI_ENDPOINT=https://api.openai.com/v1
+CHAT_MODEL=gpt-4o-mini
+AZURE_STORAGE_CONNECTION_STRING=your_connection_string
+CONTAINER_NAME=your_container_name
+            </div>
+            
+            <h2>2️⃣ 애플리케이션 실행</h2>
+            <div class="code-block">
+# Streamlit 앱 실행
+streamlit run run_app.py
+
+# 또는 스크립트 사용
+./streamlit.sh
+            </div>
+            
+            <h2>3️⃣ 접속 정보</h2>
+            <div style="background: #e6fffa; padding: 20px; border-radius: 10px; border-left: 5px solid #38b2ac;">
+                <p><strong>🌐 로컬 접속:</strong> http://localhost:8501</p>
+                <p><strong>☁️ 데모 사이트:</strong> <a href="https://sungok-web-002-bndxhdcff4ctgdbe.canadacentral-01.azurewebsites.net/" target="_blank">Azure 배포 버전</a></p>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 9: 향후 확장 방향 -->
+        <div class="slide">
+            <h1>🔮 향후 확장 방향</h1>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🌍 언어 지원 확대</h3>
+                    <ul>
+                        <li>C#, Go, Rust 지원</li>
+                        <li>다양한 프레임워크 대응</li>
+                        <li>언어별 최적화 프롬프트</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>🎯 변환 품질 향상</h3>
+                    <ul>
+                        <li>프롬프트 엔지니어링</li>
+                        <li>변환 규칙 학습</li>
+                        <li>품질 평가 메트릭</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>💾 데이터 관리</h3>
+                    <ul>
+                        <li>DB 기반 이력 저장</li>
+                        <li>고급 검색 기능</li>
+                        <li>변환 통계 분석</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>🏛️ 금융권 특화</h3>
+                    <ul>
+                        <li>규정 검토 자동화</li>
+                        <li>보안 가이드라인 적용</li>
+                        <li>컴플라이언스 체크</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>⚡ 성능 최적화</h3>
+                    <ul>
+                        <li>비동기 처리</li>
+                        <li>분산 처리 지원</li>
+                        <li>대용량 파일 처리</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>👥 사용자 관리</h3>
+                    <ul>
+                        <li>인증 및 권한 관리</li>
+                        <li>팀 협업 기능</li>
+                        <li>사용량 모니터링</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 10: 마무리 -->
+        <div class="slide">
+            <h1>🎯 결론</h1>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <div style="background: linear-gradient(135deg, #48bb78, #38a169); color: white; padding: 30px; border-radius: 15px; display: inline-block; max-width: 800px;">
+                    <h2 style="color: white; border: none; margin-bottom: 20px;">💡 AI 기반 COBOL 변환 시스템</h2>
+                    <p style="font-size: 1.2rem; margin-bottom: 15px;">레거시 시스템 현대화의 새로운 패러다임</p>
+                </div>
+            </div>
+            
+            <div class="benefits-list">
+                <div class="benefit-item">
+                    <strong>🚀 효율성</strong><br>
+                    수동 변환 대비 획기적인 시간 단축
+                </div>
+                <div class="benefit-item">
+                    <strong>💰 경제성</strong><br>
+                    API 비용 최적화 및 투명한 비용 관리
+                </div>
+                <div class="benefit-item">
+                    <strong>🔒 안정성</strong><br>
+                    강력한 오류 처리 및 이력 관리
+                </div>
+                <div class="benefit-item">
+                    <strong>📈 확장성</strong><br>
+                    모듈화 구조로 지속적인 기능 확장 가능
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f0f4f8; border-radius: 10px;">
+                <h3 style="color: #2d3748; margin-bottom: 15px;">🌐 지금 바로 체험해보세요!</h3>
+                <p style="font-size: 1.1rem; color: #4a5568;">
+                    <strong>Demo Site:</strong> 
+                    <a href="https://sungok-web-002-bndxhdcff4ctgdbe.canadacentral-01.azurewebsites.net/" 
+                       target="_blank" style="color: #667eea; text-decoration: none; font-weight: bold;">
+                        Azure 배포 버전 →
+                    </a>
+                </p>
+            </div>
+        </div>
+        
+        <div class="navigation">
+            <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 이전</button>
+            <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">다음 →</button>
+        </div>
+    </div>
+    
+    <script>
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function showSlide(index) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = index + 1;
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').disabled = index === totalSlides - 1;
+        }
+        
+        function changeSlide(direction) {
+            const newIndex = currentSlideIndex + direction;
+            if (newIndex >= 0 && newIndex < totalSlides) {
+                currentSlideIndex = newIndex;
+                showSlide(currentSlideIndex);
+            }
+        }
+        
+        // 키보드 네비게이션
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+                changeSlide(-1);
+            } else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+                changeSlide(1);
+            }
+        });
+        
+        // 초기 슬라이드 설정
+        showSlide(0);
+        
+        // 자동 슬라이드 기능 (옵션)
+        let autoSlideInterval;
+        
+        function startAutoSlide() {
+            autoSlideInterval = setInterval(() => {
+                if (currentSlideIndex < totalSlides - 1) {
+                    changeSlide(1);
+                } else {
+                    currentSlideIndex = 0;
+                    showSlide(0);
+                }
+            }, 10000); // 10초마다 자동 슬라이드
+        }
+        
+        function stopAutoSlide() {
+            clearInterval(autoSlideInterval);
+        }
+        
+        // 마우스 호버 시 자동 슬라이드 중지
+        document.addEventListener('mouseenter', stopAutoSlide);
+        document.addEventListener('mouseleave', startAutoSlide);
+        
+        // 페이지 로드 시 자동 슬라이드 시작 (비활성화 - 수동 조작 우선)
+        // startAutoSlide();
+        
+        // 터치 스와이프 지원 (모바일)
+        let startX = 0;
+        let endX = 0;
+        
+        document.addEventListener('touchstart', function(event) {
+            startX = event.touches[0].clientX;
+        });
+        
+        document.addEventListener('touchend', function(event) {
+            endX = event.changedTouches[0].clientX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diffX = startX - endX;
+            
+            if (Math.abs(diffX) > swipeThreshold) {
+                if (diffX > 0) {
+                    // 왼쪽으로 스와이프 (다음 슬라이드)
+                    changeSlide(1);
+                } else {
+                    // 오른쪽으로 스와이프 (이전 슬라이드)
+                    changeSlide(-1);
+                }
+            }
+        }
+        
+        // 슬라이드 점프 기능
+        function jumpToSlide(index) {
+            if (index >= 0 && index < totalSlides) {
+                currentSlideIndex = index;
+                showSlide(currentSlideIndex);
+            }
+        }
+        
+        // 프레젠테이션 모드 토글
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('풀스크린 모드를 지원하지 않습니다.');
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // F11 키로 풀스크린 토글
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'F11') {
+                event.preventDefault();
+                toggleFullscreen();
+            }
+        });
+        
+        // 슬라이드 미니맵 생성 (옵션)
+        function createMinimap() {
+            const minimap = document.createElement('div');
+            minimap.style.cssText = `
+                position: fixed;
+                right: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: rgba(255, 255, 255, 0.9);
+                padding: 10px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                z-index: 1001;
+                display: none;
+            `;
+            
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.style.cssText = `
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background: ${i === 0 ? '#667eea' : '#cbd5e0'};
+                    margin: 5px 0;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                `;
+                dot.onclick = () => jumpToSlide(i);
+                minimap.appendChild(dot);
+            }
+            
+            document.body.appendChild(minimap);
+            return minimap;
+        }
+        
+        // 진행률 바 생성
+        function createProgressBar() {
+            const progressBar = document.createElement('div');
+            progressBar.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: ${((currentSlideIndex + 1) / totalSlides) * 100}%;
+                height: 4px;
+                background: linear-gradient(90deg, #667eea, #764ba2);
+                transition: width 0.3s ease;
+                z-index: 1002;
+            `;
+            progressBar.id = 'progressBar';
+            document.body.appendChild(progressBar);
+        }
+        
+        // 진행률 바 업데이트
+        function updateProgressBar() {
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) {
+                progressBar.style.width = `${((currentSlideIndex + 1) / totalSlides) * 100}%`;
+            }
+        }
+        
+        // showSlide 함수 수정 (진행률 바 업데이트 포함)
+        const originalShowSlide = showSlide;
+        showSlide = function(index) {
+            originalShowSlide(index);
+            updateProgressBar();
+        }
+        
+        // 초기화
+        createProgressBar();
+        
+        // 도움말 모달
+        function showHelp() {
+            const helpModal = document.createElement('div');
+            helpModal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 2000;
+            `;
+            
+            helpModal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; text-align: center;">
+                    <h2 style="margin-bottom: 20px; color: #4a5568;">🎯 프레젠테이션 조작법</h2>
+                    <div style="text-align: left; margin: 20px 0;">
+                        <p><strong>키보드:</strong></p>
+                        <ul>
+                            <li>← → (또는 ↑ ↓): 슬라이드 이동</li>
+                            <li>F11: 풀스크린 모드</li>
+                        </ul>
+                        <p><strong>마우스/터치:</strong></p>
+                        <ul>
+                            <li>하단 버튼: 슬라이드 이동</li>
+                            <li>모바일 스와이프 지원</li>
+                        </ul>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                        닫기
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(helpModal);
+            helpModal.onclick = function(e) {
+                if (e.target === helpModal) {
+                    helpModal.remove();
+                }
+            };
+        }
+        
+        // 도움말 버튼 추가
+        const helpButton = document.createElement('button');
+        helpButton.innerHTML = '❓';
+        helpButton.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 1000;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        `;
+        helpButton.onclick = showHelp;
+        helpButton.title = '도움말';
+        document.body.appendChild(helpButton);
+    </script>
+</body>
+</html>
